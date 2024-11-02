@@ -1,26 +1,188 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# GitHub Repository Manager API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS API application to manage and search GitHub repositories for a specified user. The API provides endpoints to fetch and store GitHub repositories in a PostgreSQL database, list stored repositories, and search repositories by keyword.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
+
+- **Fetch and store repositories**: Retrieve a GitHub user's public repositories and store them in a PostgreSQL database.
+- **List stored repositories**: View all stored repositories for a specific GitHub user.
+- **Search repositories**: Search stored repositories based on keywords in their name or description.
+
+## Prerequisites
+
+- Docker and Docker Compose installed
+- GitHub API Access Token (for authenticated requests to GitHub)
+
+## Setup Instructions
+
+1. **Clone the repository**:
+
+   ```bash
+   git clone URL
+   cd 
+   ```
+
+2. **Create a `.env` file** in the project root with the following environment variables:
+
+   ```env
+   # Database Configuration
+   DB_HOST=db
+   DB_PORT=5432
+   DB_USERNAME=postgres
+   DB_PASSWORD=postgres_password
+   DB_NAME=github_repos
+
+   # GitHub API Configuration
+   GITHUB_API_URL=https://api.github.com
+   GITHUB_ACCESS_TOKEN=your_github_access_token  # Replace with your GitHub token
+   ```
+
+3. **Build and start the containers**:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   Github Actions pipeline also builds this project
+
+4. **Access the API**:
+   The API will be available at `http://localhost:3000`.
+
+## Docker Compose Configuration
+
+The `docker-compose.yml` file sets up two services:
+
+- **app**: The NestJS application running the API
+- **db**: A PostgreSQL database to store GitHub repository data
+
+### docker-compose.yml
+
+```yaml
+services:
+  db:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=nest-demo
+    networks:
+      - app-network
+
+  app:
+    image: ddz99/nest-challenge:latest
+    ports:
+      - "3000:3000" # Outside to Inside
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: nest-demo
+      GITHUB_API_URL: https://api.github.com
+      GITHUB_ACCESS_TOKEN: your_github_access_token  # Add your GitHub API key here
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+```
+
+## API Endpoints
+
+### 1. Fetch and Store Repositories for a User
+
+- **Description**: Fetch all public repositories of a specified GitHub user and store them in the database.
+- **Endpoint**: `POST /repositories/:username`
+- **Parameters**:
+  - `username` (path): GitHub username whose repositories will be fetched and stored.
+- **Example**:
+  ```bash
+  curl -X POST http://localhost:3000/repositories/johndoe
+  ```
+- **Response**:
+  Returns an array of stored repository objects.
+
+### 2. List Stored Repositories for a User
+
+- **Description**: List all repositories stored in the database for a specified GitHub user.
+- **Endpoint**: `GET /repositories/:username`
+- **Parameters**:
+  - `username` (path): GitHub username to list stored repositories.
+- **Example**:
+  ```bash
+  curl http://localhost:3000/repositories/johndoe
+  ```
+- **Response**:
+  ```json
+  [
+    {
+      "repositoryId": 123,
+      "name": "example-repo",
+      "description": "An example repository",
+      "url": "https://github.com/johndoe/example-repo",
+      "mainLanguage": "JavaScript",
+      "creationDate": "2022-01-01T00:00:00.000Z"
+    },
+    ...
+  ]
+  ```
+
+### 3. Search Repositories by Keyword
+
+- **Description**: Search for repositories stored in the database by keywords found in the repository name or description.
+- **Endpoint**: `GET /repositories/search`
+- **Parameters**:
+  - `q` (query): Keyword to search in repository names and descriptions.
+- **Example**:
+  ```bash
+  curl http://localhost:3000/repositories/search?q=example
+  ```
+- **Response**:
+  ```json
+  [
+    {
+      "repositoryId": 123,
+      "name": "example-repo",
+      "description": "An example repository",
+      "url": "https://github.com/johndoe/example-repo",
+      "mainLanguage": "JavaScript",
+      "creationDate": "2022-01-01T00:00:00.000Z"
+    },
+    ...
+  ]
+  ```
+
+## Project Structure
+
+```
+src/
+├── modules/
+│   ├── repository/
+│   │   ├── dto/
+│   │   │   ├── 
+│   │   ├── entities/
+│   │   │   └── repository.entity.ts
+│   │   ├── repository.controller.ts
+│   │   ├── repository.module.ts
+│   │   └── repository.service.ts
+├── app.module.ts
+└── main.ts
+```
+
+
+
 
 ## Description
 
@@ -57,43 +219,3 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

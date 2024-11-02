@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { RepositoryService } from './repository.service';
 import { RepositoryController } from './repository.controller';
-import { Repository } from './repository.entity';
+import { Repository } from './entities/repository.entity';
 
 @Module({
   imports: [
