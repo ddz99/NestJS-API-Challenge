@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=nest-demo
+    networks:
+      - app-network
+
+  app:
+    image: ddz99/nest-challenge:latest
+    ports:
+      - "3001:3000" # Outside to Inside
+    networks:
+      - app-network
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: nest-demo
+      GITHUB_API_URL: https://api.github.com
+      GITHUB_ACCESS_TOKEN: your_github_access_token  
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
