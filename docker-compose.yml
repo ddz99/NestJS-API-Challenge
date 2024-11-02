@@ -22,13 +22,13 @@ services:
       - db
     environment:
       NODE_ENV: production
-      DATABASE_HOST: localhost
+      DATABASE_HOST: db
       DATABASE_PORT: 5432
       DATABASE_USER: postgres
       DATABASE_PASSWORD: postgres
       DATABASE_NAME: nest-demo
       GITHUB_API_URL: https://api.github.com
-      GITHUB_ACCESS_TOKEN: your_github_access_token  
+      GITHUB_ACCESS_TOKEN: your_github_access_token  # Add your GitHub API key here
     restart: unless-stopped
 
 volumes:
